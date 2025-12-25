@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Canteen | Smart College Canteen Management</title>
+    <!-- Link to CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Header -->
+    <header id="app-header" class="hidden">
+        <div class="container nav-wrapper">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                AI Canteen
+            </div>
+            <div class="flex items-center gap-20">
+                <span id="user-display" class="user-badge"></span>
+                <button onclick="app.logout()" class="btn btn-outline btn-sm">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <!-- Login View -->
+        <section id="auth-view" class="card">
+            <div class="auth-box">
+                <h2 style="margin-bottom: 20px; color: var(--primary);">Welcome Back</h2>
+                <div class="role-switch">
+                    <div class="role-btn active" onclick="app.setAuthRole('customer')" id="btn-role-customer">Student</div>
+                    <div class="role-btn" onclick="app.setAuthRole('owner')" id="btn-role-owner">Owner</div>
+                </div>
+                <form onsubmit="app.handleLogin(event)">
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="Username" required value="user">
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Password" required value="123">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                </form>
+                <p style="margin-top: 15px; font-size: 0.8rem; color: #888;">
+                    (Demo: use <b>user/123</b> or <b>admin/123</b>)
+                </p>
+            </div>
+        </section>
+
+        <!-- Owner Dashboard -->
+        <section id="owner-dashboard" class="hidden">
+            <div class="flex justify-between items-center" style="margin-bottom: 25px;">
+                <h2>Owner Dashboard</h2>
+                <div class="flex gap-10">
+                    <button class="btn btn-primary btn-sm" onclick="app.toggleModal('menu-modal')">+ Add Item</button>
+                    <button class="btn btn-secondary btn-sm" onclick="app.runAIAnalysis()">Run AI Report</button>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-overview">
+                <div class="card stat-card">
+                    <div class="stat-value" id="stat-revenue">$0</div>
+                    <div class="stat-label">Today's Revenue</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-value" id="stat-orders">0</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-value" id="stat-pending">0</div>
+                    <div class="stat-label">Pending Orders</div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <!-- Live Orders -->
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Live Orders</h3>
+                    <div id="orders-list" style="max-height: 400px; overflow-y: auto;">
+                        <p style="color: #999; text-align: center; padding: 20px;">No active orders.</p>
+                    </div>
+                </div>
+
+                <!-- AI Insights & Charts -->
+                <div class="flex flex-col gap-20">
+                    <div class="card ai-panel">
+                        <div class="ai-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 16a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"></path><path d="M12 8v4l3 3"></path></svg>
+                            AI Financial Advisor
+                        </div>
+                        <div id="ai-content">
+                            <p style="opacity: 0.7; font-style: italic;">Click "Run AI Report" to analyze daily data...</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-bottom: 15px;">Sales Trend (Weekly)</h3>
+                        <div class="chart-container" id="sales-chart">
+                            <!-- Bars injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer Menu -->
+        <section id="customer-view" class="hidden">
+            <div class="flex justify-between items-center" style="margin-bottom: 25px;">
+                <div>
+                    <h2>Today's Menu</h2>
+                    <p style="color: #666; font-size: 0.9rem;">Freshly prepared by AI-managed inventory</p>
+                </div>
+                <button class="btn btn-primary" onclick="app.toggleCart()">
+                    Cart (<span id="cart-count">0</span>)
+                </button>
+            </div>
+
+            <!-- Search/Filter -->
+            <div class="input-group" style="max-width: 300px;">
+                <input type="text" placeholder="Search food items..." onkeyup="app.filterMenu(this.value)">
+            </div>
+
+            <div class="grid grid-3" id="menu-grid">
+                <!-- Menu Items Injected Here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div id="cart-modal" class="modal-overlay hidden">
+        <div class="cart-sidebar">
+            <div class="flex justify-between items-center">
+                <h2>Your Cart</h2>
+                <button class="btn btn-sm btn-outline" onclick="app.toggleCart()">Close</button>
+            </div>
+            <div class="cart-items" id="cart-items-container">
+                <!-- Items -->
+            </div>
+            <div class="border-top" style="border-top: 2px solid #eee; padding-top: 20px;">
+                <div class="flex justify-between" style="margin-bottom: 15px; font-size: 1.2rem; font-weight: bold;">
+                    <span>Total:</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="app.showPayment()">Proceed to Pay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal-overlay hidden" style="justify-content: center; align-items: center;">
+        <div class="card" style="width: 400px; max-width: 90%; position: relative;">
+            <button onclick="document.getElementById('payment-modal').classList.add('hidden')" style="position: absolute; top: 15px; right: 15px; border: none; background: none; font-size: 1.2rem; cursor: pointer;">&times;</button>
+            <h3 style="text-align: center; margin-bottom: 20px;">Scan to Pay</h3>
+            <div class="qr-display">
+                <!-- Using a generic QR API for simulation -->
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UPI-PAYMENT-LINK" alt="QR Code" class="qr-img">
+                <p style="margin-top: 10px; font-weight: bold;">Total: <span id="pay-amount">$0.00</span></p>
+            </div>
+            <p style="font-size: 0.9rem; color: #666; text-align: center; margin-bottom: 20px;">
+                Scan with any UPI app (GPay, PhonePe) or Canteen Wallet.
+            </p>
+            <button class="btn btn-success" style="width: 100%; background: var(--success); color: white;" onclick="app.confirmPayment()">Confirm Payment</button>
+        </div>
+    </div>
+
+    <!-- Add Item Modal (Owner) -->
+    <div id="menu-modal" class="modal-overlay hidden" style="justify-content: center; align-items: center;">
+        <div class="card" style="width: 400px; position: relative;">
+            <button onclick="document.getElementById('menu-modal').classList.add('hidden')" style="position: absolute; top: 15px; right: 15px; border: none; background: none; font-size: 1.2rem; cursor: pointer;">&times;</button>
+            <h3 style="margin-bottom: 20px;">Add Menu Item</h3>
+            <form onsubmit="app.addMenuItem(event)">
+                <div class="input-group">
+                    <label>Item Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="input-group">
+                    <label>Price ($)</label>
+                    <input type="number" name="price" step="0.01" required>
+                </div>
+                <div class="input-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="Food">Food</option>
+                        <option value="Beverage">Beverage</option>
+                        <option value="Snack">Snack</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Type</label>
+                    <select name="type">
+                        <option value="veg">Veg</option>
+                        <option value="non-veg">Non-Veg</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Link to JS file -->
+    <script src="script.js"></script>
+</body>
+</html>
